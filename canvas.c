@@ -9,9 +9,8 @@
 #include <GLFW/glfw3.h>
 #endif
 
-int width = 250;
-int height = 250;
-
+GLdouble lolWidth = WIDTH;
+GLdouble lolHeight = HEIGHT;
 GLdouble mouseX, mouseY;
 GLdouble mouseX2, mouseY2;
 GLdouble mouseX3, mouseY3;
@@ -21,6 +20,8 @@ GLfloat red[3] = {1, 0, 0};
 GLfloat green[3] = {0.0, 1.0, 0.0};
 GLfloat blue[3] = {0.0, 0.0, 1.0};
 GLfloat black[3] = {0.0, 0.0, 0.0}; //init
+bool redColor, blueColor, greenColor = false;
+bool blackColor = true;
 
 bool lineMode = true; //init
 bool triangleMode, rectangleMode, circleMode = false;
@@ -39,7 +40,7 @@ void init() {
     glColor3fv(colors);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0.0, width, 0.0, height); //0, 0, 250, 250
+    gluOrtho2D(0.0, WIDTH, 0.0, HEIGHT); //0, 0, 250, 250
     glMatrixMode(GL_MODELVIEW);
     glColor3f(0.0, 0.0, 0.0); //black = orig
     glPointSize(10);
@@ -48,6 +49,8 @@ void init() {
 
 void framebuffer_resize(GLFWwindow* window, int width, int height) {
     printf("Got Reshape Event\n");
+    lolWidth = width;
+    lolHeight = height;
     glViewport(0, 0, width, height);
 }
 
@@ -156,12 +159,8 @@ void cursorCircle() {
 }
 
 void switchCol(GLfloat *target, GLfloat *colorClicked) {
-    if(target[0] == colorClicked[0] && target[1] == colorClicked[1] && target[2] == colorClicked[2]){
-        memcpy(target, black, 3*sizeof(GLfloat)); //init
-    } //if
-    else {
+
         memcpy(target, colorClicked, 3*sizeof(GLfloat));
-    } //else
 }
 
 void freePrim(Primitive* prim) {
@@ -223,8 +222,8 @@ void mouseDownRect() {
     if(rectFree(tail)) {
         Pt *p1 = tail->prev->prev->data;
         Pt *p2 = tail->prev->data;
-        Rect *rect = makeRect(p1, p2, colors);
-        Primitive *rectMade = makePrim(RECT, makeRect);
+        Rect *rectPre = makeRect(p1, p2, colors);
+        Primitive *rectMade = makePrim(rectPre, makeRect);
         addPrim(tail, rectMade);
     }
 }
@@ -296,14 +295,12 @@ void mouseUpCircle() {
 }
 
 void reshape(GLFWwindow *wind, float w, float h) {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0.0, w, 0.0, h, -1.0, 1.0);
-    width = w;
-    height = h;
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    gluOrtho2D(0.0, w, h, 0.0);
+//    glMatrixMode(GL_MODELVIEW);
+    lolWidth = w;
+    lolHeight = h;
 }
 
 
@@ -453,15 +450,55 @@ void key_callback(GLFWwindow *w, int key, int scancode, int action, int mods) {
                 break;
             case 'r':
             case 'R':
-                switchCol(colors, red);
+                if(blackColor || greenColor || blueColor) {
+                    memcpy(colors, red, 3*sizeof(GLfloat));
+                    greenColor = false;
+                    blackColor = false;
+                    redColor = true;
+                    blueColor = false;
+                }
+                else {
+                    memcpy(colors, black, 3*sizeof(GLfloat));
+                    greenColor = false;
+                    blackColor = true;
+                    redColor = false;
+                    blueColor = false;
+                }
+
                 break;
             case 'g':
             case 'G':
-                switchCol(colors, green);
+                if(blackColor || blueColor || redColor) {
+                    memcpy(colors, green, 3*sizeof(GLfloat));
+                    greenColor = true;
+                    blackColor = false;
+                    redColor = false;
+                    blueColor = false;
+                }
+                else {
+                    memcpy(colors, black, 3*sizeof(GLfloat));
+                    greenColor = false;
+                    blackColor = true;
+                    redColor = false;
+                    blueColor = false;
+                }
                 break;
             case 'b':
             case 'B':
-                switchCol(colors, blue);
+                if(blackColor || greenColor || redColor) {
+                    memcpy(colors, blue, 3*sizeof(GLfloat));
+                    greenColor = false;
+                    blackColor = false;
+                    redColor = false;
+                    blueColor = true;
+                }
+                else {
+                    memcpy(colors, black, 3*sizeof(GLfloat));
+                    greenColor = false;
+                    blackColor = true;
+                    redColor = false;
+                    blueColor = false;
+                }
                 break;
             case 'c':
             case 'C':
@@ -504,8 +541,8 @@ void mouse(GLFWwindow* window, int button, int action, int mods) {
     glfwGetCursorPos(window, &x, &y);
     switch(button) {
         case GLFW_MOUSE_BUTTON_LEFT:
-            mouseY = -(2*(y/height) - 1);
-            mouseX = 2*(x/width) - 1;
+            mouseY = -(2*(y/lolHeight) - 1);
+            mouseX = 2*(x/lolWidth) - 1;
             if(action == GLFW_PRESS) {
                 mouseDown = true;
                 if(lineMode) {
@@ -540,8 +577,8 @@ void mouse(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void cursor(GLFWwindow* window, double xpos, double ypos) {
-    mouseX = 2*(xpos/width) - 1;
-    mouseY = -1*(2*(ypos/height) - 1);
+    mouseX = 2*(xpos/WIDTH) - 1;
+    mouseY = -1*(2*(ypos/HEIGHT) - 1);
     //if(xpos > 0 && xpos < width && ypos > 0 && ypos < height) { //same as entry, essentially
         if(lineMode) {
             cursorLine();
@@ -564,7 +601,7 @@ int main() {
     if (!glfwInit()) {
         exit(EXIT_FAILURE);
     }
-    window = glfwCreateWindow(width, height, "HW 1", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "HW 1", NULL, NULL);
     if (!window){
         glfwTerminate();
         exit(EXIT_FAILURE);
