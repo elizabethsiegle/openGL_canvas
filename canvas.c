@@ -32,8 +32,8 @@ bool keyDown, mouseDown = false; //init
 Pt *pressedCoords;
 Pt *releasedCoords;
 
-Primitive *head;
-Primitive *tail;
+Node *head;
+Node *tail;
 
 void init() {
     glClearColor(1.0, 1.0, 1.0, 0.0); //white background
@@ -47,12 +47,7 @@ void init() {
     glLineStipple(1, 0x3F07);
 }
 
-void framebuffer_resize(GLFWwindow* window, int width, int height) {
-    printf("Got Reshape Event\n");
-    lolWidth = width;
-    lolHeight = height;
-    glViewport(0, 0, width, height);
-}
+
 
 GLfloat circRadius(Pt *center, Pt *edge) {
     return sqrt((center->xPos - edge->xPos) * (center->xPos - edge->xPos) + (center->yPos - edge->yPos) * (center->yPos - edge->yPos));
@@ -66,19 +61,19 @@ void checkCircleIndices(Circle *c) {
     }
 }
 
-bool hasCircle(Primitive *tail) {
+bool hasCircle(Node *tail) {
     return tail->prev->shape == CIRCLE;
 }
 
-bool hasRect(Primitive *tail) {
+bool hasRect(Node *tail) {
     return tail->prev->shape == RECT;
 }
 
-bool hasTriangle(Primitive *tail) {
+bool hasTriangle(Node *tail) {
     return tail->prev->shape == TRIANGLE;
 }
 
-bool hasLine(Primitive *tail) {
+bool hasLine(Node *tail) {
     return tail->prev->shape == LINE;
 }
 
@@ -89,11 +84,11 @@ void cursorLine() {
 //          printf(mouseY);
             Pt *startPt = (Pt *)tail->prev->data;
             Pt *endPt = makePt(mouseX, mouseY, colors);
-            Line *line = makeLine(startPt, endPt, colors);
-            Primitive *primPt = makePrim(POINT, endPt);
-            Primitive *primLine = makePrim(LINE, line);
-            addPrim(tail, primPt);
-            addPrim(tail, primLine);
+            Line *line1 = makeLine(startPt, endPt, colors);
+            Node *nodePt = makeNode(POINT, endPt);
+            Node *nodeLine = makeNode(LINE, line1);
+            addNode(tail, nodePt);
+            addNode(tail, nodeLine);
         }
         else {
             glLineStipple(1, 0x00FF);
@@ -121,10 +116,10 @@ void cursorRect() {
             Pt *startPt = (Pt *)tail->prev->data;
             Pt *endPt = makePt(mouseX, mouseY, colors);
             Rect *rect = makeRect(startPt, endPt, colors);
-            Primitive *addPt = makePrim(POINT, endPt);
-            Primitive *addRect = makePrim(RECT, rect);
-            addPrim(tail, addPt);
-            addPrim(tail, addRect);
+            Node *addPt = makeNode(POINT, endPt);
+            Node *addRect = makeNode(RECT, rect);
+            addNode(tail, addPt);
+            addNode(tail, addRect);
         }
         else {
             ((Pt *)(tail->prev->prev->data))->xPos = mouseX;
@@ -141,10 +136,10 @@ void cursorCircle() {
             Pt *startPt = (Pt *)tail->prev->data;
             Pt *endPt = makePt(mouseX, mouseY, colors);
             Circle *circle = makeCircle(startPt, endPt, colors);
-            Primitive *endPtPart = makePrim(POINT, endPt);
-            Primitive *circPart = makePrim(CIRCLE, circle);
-            addPrim(tail, endPtPart);
-            addPrim(tail, circPart);
+            Node *endPtPart = makeNode(POINT, endPt);
+            Node *circPart = makeNode(CIRCLE, circle);
+            addNode(tail, endPtPart);
+            addNode(tail, circPart);
         } //!hasCircle
         else {
             ((Pt *)(tail->prev->prev->data))->xPos = mouseX;
@@ -163,36 +158,36 @@ void switchCol(GLfloat *target, GLfloat *colorClicked) {
         memcpy(target, colorClicked, 3*sizeof(GLfloat));
 }
 
-void freePrim(Primitive* prim) {
-    prim->prev = NULL;
-    prim->next = NULL;
-    if(prim->shape == POINT) {
-        free((Pt *) prim->data);
+void freeNode(Node* n) {
+    n->prev = NULL;
+    n->next = NULL;
+    if(n->shape == POINT) {
+        free((Pt *) n->data);
     }
-    else if(prim->shape == LINE) {
-        free((Line *) prim->data);
+    else if(n->shape == LINE) {
+        free((Line *) n->data);
     }
-    else if(prim->shape == TRIANGLE) {
-        free((Triangle *) prim->data);
+    else if(n->shape == TRIANGLE) {
+        free((Triangle *) n->data);
     }
-    else if(prim->shape == RECT) {
-        free((Rect *) prim->data);
+    else if(n->shape == RECT) {
+        free((Rect *) n->data);
     }
-    else if(prim->shape == CIRCLE) {
-        free((Circle *) prim->data);
+    else if(n->shape == CIRCLE) {
+        free((Circle *) n->data);
     }
 }
 
-void removePrev(Primitive *prim) {
-    Primitive *curr = prim->prev;
-    prim->prev = curr->prev;
-    freePrim(curr);
+void removePrev(Node *n) {
+    Node *curr = n->prev;
+    n->prev = curr->prev;
+    freeNode(curr);
 }
 
 void clickedPt(){
     pressedCoords = makePt(mouseX, mouseY, colors);
-    Primitive *retPt = makePrim(POINT,pressedCoords);
-    addPrim(tail, retPt);
+    Node *retPt = makeNode(POINT,pressedCoords);
+    addNode(tail, retPt);
 }
 
 void mouseDownCircle() {
@@ -201,8 +196,8 @@ void mouseDownCircle() {
         Pt *pt1 = tail->prev->prev->data;
         Pt *pt2 = tail->prev->data;
         Circle *circleMade = makeCircle(pt1, pt2, colors);
-        Primitive *retCirc = makePrim(CIRCLE, circleMade);
-        addPrim(tail, retCirc);
+        Node *retCirc = makeNode(CIRCLE, circleMade);
+        addNode(tail, retCirc);
     } //circleFree
 }
 
@@ -211,9 +206,9 @@ void mouseDownLine() {
     if(lineFree(tail)) {
         Pt *p1 = tail->prev->data;
         Pt *p2 = tail->prev->prev->data;
-        Line *linePrePrim = makeLine(p1, p2, colors);
-        Primitive *linePrim = makePrim(LINE, linePrePrim);
-        addPrim(tail, linePrim);
+        Line *linePreNode = makeLine(p1, p2, colors);
+        Node *lineNode = makeNode(LINE, linePreNode);
+        addNode(tail, lineNode);
     }
 }
 
@@ -222,9 +217,9 @@ void mouseDownRect() {
     if(rectFree(tail)) {
         Pt *p1 = tail->prev->prev->data;
         Pt *p2 = tail->prev->data;
-        Rect *rectPre = makeRect(p1, p2, colors);
-        Primitive *rectMade = makePrim(rectPre, makeRect);
-        addPrim(tail, rectMade);
+        Rect *preRect = makeRect(p1, p2, colors);
+        Node *rectMade = makeNode(RECT, preRect);
+        addNode(tail, rectMade);
     }
 }
 
@@ -241,8 +236,8 @@ void mouseDownTri() {
         Pt* v2 = (Pt *)tail->prev->prev->data;
         Pt* v3 = (Pt *)tail->prev->prev->prev->data;
         Triangle* tri = makeTriangle(v1, v2, v3, colors);
-        Primitive *triMade = makePrim(TRIANGLE, tri);
-        addPrim(tail, triMade);
+        Node *triMade = makeNode(TRIANGLE, tri);
+        addNode(tail, triMade);
     }
 }
 
@@ -295,24 +290,19 @@ void mouseUpCircle() {
 }
 
 void reshape(GLFWwindow *wind, float w, float h) {
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    gluOrtho2D(0.0, w, h, 0.0);
-//    glMatrixMode(GL_MODELVIEW);
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    //gluOrtho2D(0.0, w, h, 0.0);
+    //glMatrixMode(GL_MODELVIEW);
     lolWidth = w;
     lolHeight = h;
 }
 
-
-Polygon *makePolygon(double x) {
-    Polygon *new1;
-    if ((new1 = (Polygon *) malloc( sizeof(Polygon)))!= 0) {
-        new1->data =  &x;
-    }
-    else {
-        exit(0);
-    }
-    return new1;
+void framebuffer_resize(GLFWwindow* window, int width, int height) {
+    //printf("Got Reshape Event\n");
+    lolWidth = width;
+    lolHeight = height;
+    glViewport(0, 0, width, height);
 }
 
 
@@ -407,7 +397,7 @@ void drawCircle(Circle *c) {
     glEnd();
 }
 
-void draw(Primitive *p1) {
+void draw(Node *p1) {
     if(p1->shape == POINT) {
         drawPt((Pt *) p1->data);
     }
@@ -426,8 +416,8 @@ void draw(Primitive *p1) {
     }
 }
 
-void drawAll(Primitive *p2) {
-    Primitive *curr = p2->next;
+void drawAll(Node *p2) {
+    Node *curr = p2->next;
     while (curr->shape != -1) {
         draw(curr);
         curr = curr->next;
@@ -577,8 +567,8 @@ void mouse(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void cursor(GLFWwindow* window, double xpos, double ypos) {
-    mouseX = 2*(xpos/WIDTH) - 1;
-    mouseY = -1*(2*(ypos/HEIGHT) - 1);
+    mouseX = 2*(xpos/lolWidth) - 1;
+    mouseY = -1*(2*(ypos/lolHeight) - 1);
     //if(xpos > 0 && xpos < width && ypos > 0 && ypos < height) { //same as entry, essentially
         if(lineMode) {
             cursorLine();
@@ -609,18 +599,19 @@ int main() {
     glfwSetWindowPos(window, 100, 100);
     
     glfwMakeContextCurrent(window);
-    //glfwSwapInterval(1);
-    
-    //glfwSetWindowSizeCallback
     glfwSetFramebufferSizeCallback(window, framebuffer_resize);
-
-    glfwSetKeyCallback(window, key_callback);
-    //glfwSetCursorEnterCallback(window, cursor);
-    glfwSetCursorPosCallback(window, cursor);
-
     glfwSetMouseButtonCallback(window, mouse);
 
+    glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, cursor);
+    //glfwSwapInterval(1);
+    //glfwSetWindowSizeCallback(window, reshape);
+    //glfwSetWindowSizeCallback
+    
+       //glfwSetCursorEnterCallback(window, cursor);
+   
+
+    
 
     init();
     while (!glfwWindowShouldClose(window)) { //loop till user closes window
@@ -632,7 +623,7 @@ int main() {
     }
     
     glfwTerminate();
-    freePrim(head);
-    freePrim(tail);
+    freeNode(head);
+    freeNode(tail);
     exit(EXIT_SUCCESS); //glfwDestroyWindow(window);
 }

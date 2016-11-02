@@ -12,12 +12,12 @@
 #include <string.h>
 #include <math.h>
 
-typedef struct primitive {
+typedef struct node {
     int shape;
     void *data;
-    struct primitive *prev;
-    struct primitive *next;
-} Primitive;
+    struct node *prev;
+    struct node *next;
+} Node;
 
 typedef struct pt {
     bool show;
@@ -76,20 +76,21 @@ typedef struct polygon {
     bool fill;
 } Polygon;
 
-Primitive* initLinkedList();
-Primitive *makePrim(int shape, void *data);
-void addPrim(Primitive *tail, Primitive *newPrim);
+void clearAll(Node *head);
+Node *initLinkedList();
+Node *makeNode(int shape, void *data);
+void addNode(Node *tail, Node *newPrim);
 Pt *makePt(GLfloat xPos, GLfloat yPos, GLfloat colors[]);
 Line *makeLine(Pt *xPos, Pt *yPos, GLfloat colors[]);
 Triangle *makeTriangle(Pt *p1, Pt *p2, Pt *p3, GLfloat colors[]);
 Rect *makeRect(Pt* p1, Pt* p2, GLfloat colors[]);
 Circle *makeCircle(Pt *d1, Pt *d2, GLfloat colors[]);
-bool lineFree(Primitive *t);
-bool triangleFree(Primitive *tail);
-bool rectFree(Primitive* tail);
-bool circleFree(Primitive* tail);
+bool lineFree(Node *t);
+bool triangleFree(Node *tail);
+bool rectFree(Node* tail);
+bool circleFree(Node* tail);
 
-void freeAll(Primitive* head);
-void freePrim(Primitive *prim);
+void freeAll(Node* head);
+void freePrim(Node *prim);
 
 #endif

@@ -33,12 +33,12 @@ void switchCol(GLfloat *target, GLfloat *colorClicked);
 void drawVertices(double *arr, int startIndex, int leng);
 void checkCircleIndices(Circle *c);
 GLfloat circRadius(Pt *center, Pt *edge);
-bool hasCircle(Primitive *tail);
-bool hasRect(Primitive *tail);
-bool hasTriangle(Primitive *tail);
-bool hasLine(Primitive *tail);
+bool hasCircle(Node *tail);
+bool hasRect(Node *tail);
+bool hasTriangle(Node *tail);
+bool hasLine(Node *tail);
 void clickedPt();
-void removePrev(Primitive *prim);
+void removePrev(Node *n);
 void mouseDownCircle();
 void mouseDownLine();
 void mouseDownRect();
@@ -53,6 +53,6 @@ void cursorLine();
 bool circleAvail(Circle *c);
 bool lineAvail(Line *l);
 bool triangleAvail(Triangle *t);
-void freePrim(Primitive* prim);
+void freeNode(Node* n);
 
 #endif

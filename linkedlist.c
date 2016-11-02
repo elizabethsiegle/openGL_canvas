@@ -1,19 +1,19 @@
 #include "linkedlist.h"
 #include "canvas.h"
 
-Primitive* initLinkedList() {
-    Primitive* head = makePrim(-1, 0);
-    Primitive* tail = makePrim(-1, 0);
+Node* initLinkedList() {
+    Node* head = makeNode(-1, 0);
+    Node* tail = makeNode(-1, 0);
     head->next = tail;
     tail->prev = head;
     return head;
 }
 
-void clearAll(Primitive *head) {
+void clearAll(Node *head) {
     while(head->next->shape != -1) {
-        Primitive* curr = head->next;
+        Node* curr = head->next;
         head->next = head->next->next;
-        freePrim(curr);
+        freeNode(curr);
     }
     head->next->prev = head;
 }
@@ -29,36 +29,36 @@ Pt *makePt(GLfloat x, GLfloat y, GLfloat colors[]) {
     return p;
 }
 
-bool lineFree(Primitive *t) {
+bool lineFree(Node *t) {
     return t->prev->shape == POINT &&
     ((Pt *)(t->prev->data))->show &&
     t->prev->prev->shape == POINT &&
     ((Pt *)(t->prev->prev->data))->show;
 }
 
-bool triangleFree(Primitive *tail) {
+bool triangleFree(Node *tail) {
     return tail->prev->shape == LINE && ((Line *)(tail->prev->data))->dashed == true;
 }
 
-bool rectFree(Primitive* tail) {
+bool rectFree(Node* tail) {
     return tail->prev->shape == POINT &&
     ((Pt *)(tail->prev->data))->show &&
     tail->prev->prev->shape == POINT &&
     ((Pt *)(tail->prev->prev->data))->show;
 }
 
-bool circleFree(Primitive* tail) {
+bool circleFree(Node* tail) {
     return tail->prev->shape == POINT &&
     ((Pt *)(tail->prev->data))->show &&
     tail->prev->prev->shape == POINT &&
     ((Pt *)(tail->prev->prev->data))->show;
 }
 
-void addPrim(Primitive *tail, Primitive *newPrim) {
-    newPrim->next = tail;
-    newPrim->prev = tail->prev;
-    tail->prev->next = newPrim;
-    tail->prev = newPrim;
+void addNode(Node *tail, Node *newNode) {
+    newNode->next = tail;
+    newNode->prev = tail->prev;
+    tail->prev->next = newNode;
+    tail->prev = newNode;
 }
 
 Line *makeLine(Pt *xPos, Pt *yPos, GLfloat colors[]) {
@@ -142,14 +142,14 @@ Circle *makeCircle(Pt *d1, Pt *d2, GLfloat colors[]) {
     return c;
 }
 
-Primitive *makePrim(int shape, void *data) {
-    Primitive* prim;
-    if((prim = (Primitive *) malloc(sizeof(Primitive))) != NULL) {
-        prim->shape = shape;
-        prim->data = data;
+Node *makeNode(int shape, void *data) {
+    Node* n;
+    if((n = (Node *) malloc(sizeof(Node))) != NULL) {
+        n->shape = shape;
+        n->data = data;
     }
     else {
         exit(0);
     }
-    return prim;
+    return n;
 }
